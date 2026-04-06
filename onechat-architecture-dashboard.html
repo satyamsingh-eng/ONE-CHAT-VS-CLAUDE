@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OneChat — Architecture Analysis Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=SF+Pro+Text:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --white: #ffffff;
+    --bg: #fbfbfd;
+    --black: #1d1d1f;
+    --black-secondary: #424245;
+    --black-tertiary: #6e6e73;
+    --blue: #0071e3;
+    --blue-hover: #0077ed;
+    --blue-light: #e8f2fc;
+    --blue-badge: #dceefb;
+    --border: #e8e8ed;
+    --border-light: #f2f2f7;
+    --card-bg: #ffffff;
+    --green: #34c759;
+    --green-bg: #e8f8ed;
+    --red: #ff3b30;
+    --red-bg: #fde8e7;
+    --amber: #f0a500;
+    --amber-bg: #fef7e0;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+    --shadow-hover: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--black);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+  }
+
+  /* ── Header ── */
+  .site-header {
+    background: rgba(251,251,253,0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: var(--blue);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.5px;
+  }
+  .logo-text {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    color: var(--black);
+  }
+  .logo-text span { color: var(--black-tertiary); font-weight: 400; }
+
+  /* ── Nav Tabs ── */
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--border-light);
+    padding: 3px;
+    border-radius: 10px;
+  }
+  .nav-tab {
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--black-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    background: none;
+    white-space: nowrap;
+  }
+  .nav-tab:hover { color: var(--black); }
+  .nav-tab.active {
+    background: var(--white);
+    color: var(--black);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  /* ── Main ── */
+  .main { max-width: 1200px; margin: 0 auto; padding: 40px 32px 80px; }
+
+  /* ── Page Title ── */
+  .page-title {
+    margin-bottom: 48px;
+    animation: fadeUp 0.6s ease;
+  }
+  .page-title h1 {
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -1.2px;
+    line-height: 1.1;
+    color: var(--black);
+  }
+  .page-title p {
+    font-size: 17px;
+    color: var(--black-tertiary);
+    margin-top: 10px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  /* ── Score Banner ── */
+  .score-banner {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 48px;
+    animation: fadeUp 0.6s ease 0.1s both;
+  }
+  .score-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: box-shadow 0.25s ease;
+  }
+  .score-card:hover { box-shadow: var(--shadow-hover); }
+  .score-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--black-tertiary);
+    margin-bottom: 8px;
+  }
+  .score-value {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    color: var(--black);
+    line-height: 1;
+  }
+  .score-value .unit { font-size: 18px; font-weight: 500; color: var(--black-tertiary); }
+  .score-sub {
+    font-size: 13px;
+    color: var(--black-tertiary);
+    margin-top: 6px;
+  }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 56px;
+    display: none;
+  }
+  .section.active { display: block; animation: fadeUp 0.45s ease; }
+  .section-header {
+    margin-bottom: 24px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .section-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.8px;
+    color: var(--black);
+  }
+  .section-header .badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.3px;
+  }
+  .badge-green { background: var(--green-bg); color: #1a7a34; }
+  .badge-blue { background: var(--blue-badge); color: #005bb5; }
+  .badge-amber { background: var(--amber-bg); color: #8a6000; }
+  .badge-red { background: var(--red-bg); color: #c0291f; }
+
+  /* ── Cards Grid ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+  }
+  .card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-1px);
+  }
+  .card-icon {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    margin-bottom: 14px;
+  }
+  .icon-green { background: var(--green-bg); }
+  .icon-blue { background: var(--blue-badge); }
+  .icon-amber { background: var(--amber-bg); }
+  .icon-red { background: var(--red-bg); }
+  .card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    color: var(--black);
+    margin-bottom: 6px;
+  }
+  .card p {
+    font-size: 14px;
+    color: var(--black-tertiary);
+    line-height: 1.55;
+  }
+  .card-meta {
+    font-size: 12px;
+    color: var(--blue);
+    font-weight: 500;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* ── Tables ── */
+  .table-wrap {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .table-title {
+    padding: 18px 24px 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    color: var(--black);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--black-tertiary);
+    padding: 14px 24px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 13px 24px;
+    font-size: 14px;
+    color: var(--black-secondary);
+    border-bottom: 1px solid var(--border-light);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #f8f9fb; }
+  td .winner-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+  }
+  .tag-onechat { background: var(--blue-badge); color: #005bb5; }
+  .tag-claude { background: var(--amber-bg); color: #8a6000; }
+  .tag-equiv { background: var(--border-light); color: var(--black-tertiary); }
+
+  /* ── Status Dot ── */
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-green { background: var(--green); }
+  .dot-amber { background: var(--amber); }
+  .dot-red { background: var(--red); }
+
+  /* ── Action Items List ── */
+  .action-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .action-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: box-shadow 0.2s ease;
+  }
+  .action-item:hover { box-shadow: var(--shadow); }
+  .action-priority {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .priority-high { background: var(--blue-badge); color: #005bb5; }
+  .priority-medium { background: var(--border-light); color: var(--black-tertiary); }
+  .priority-low { background: var(--border-light); color: var(--black-tertiary); }
+  .action-content h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--black);
+    margin-bottom: 3px;
+  }
+  .action-content p {
+    font-size: 13px;
+    color: var(--black-tertiary);
+    line-height: 1.5;
+  }
+  .action-loc {
+    font-size: 12px;
+    color: var(--blue);
+    font-weight: 500;
+    margin-top: 6px;
+    font-family: 'SF Mono', SFMono-Regular, Menlo, monospace;
+  }
+
+  /* ── Not Applicable List ── */
+  .na-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 8px;
+  }
+  .na-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--border-light);
+    font-size: 13px;
+    color: var(--black-tertiary);
+  }
+  .na-item .na-x {
+    color: var(--black-tertiary);
+    font-weight: 600;
+    opacity: 0.4;
+    font-size: 11px;
+  }
+
+  /* ── Summary Strip ── */
+  .summary-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+  .summary-cell {
+    background: var(--card-bg);
+    padding: 20px 24px;
+    text-align: center;
+  }
+  .summary-cell .num {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: var(--black);
+  }
+  .summary-cell .lbl {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--black-tertiary);
+    margin-top: 2px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .header-inner { padding: 14px 20px; flex-direction: column; gap: 12px; }
+    .main { padding: 28px 20px 60px; }
+    .page-title h1 { font-size: 28px; }
+    .score-banner { grid-template-columns: repeat(2, 1fr); }
+    .cards-grid { grid-template-columns: 1fr; }
+    .na-grid { grid-template-columns: 1fr; }
+    .summary-strip { grid-template-columns: 1fr; }
+    .nav-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-mark">O</div>
+      <div class="logo-text">OneChat <span>Architecture Analysis</span></div>
+    </div>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="overview">Overview</button>
+      <button class="nav-tab" data-tab="harness">Agentic Harness</button>
+      <button class="nav-tab" data-tab="memory">Memory &amp; Context</button>
+      <button class="nav-tab" data-tab="tools">Tools System</button>
+      <button class="nav-tab" data-tab="hooks">Hooks &amp; Permissions</button>
+      <button class="nav-tab" data-tab="infra">Infrastructure</button>
+    </nav>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- Page Title -->
+  <div class="page-title">
+    <h1>OneChat vs Claude Code</h1>
+    <p>Comprehensive architecture comparison — patterns adopted, gaps identified, and action items prioritized.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- OVERVIEW TAB -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section active" id="tab-overview">
+
+    <!-- Score Cards -->
+    <div class="score-banner">
+      <div class="score-card">
+        <div class="score-label">Already Implemented</div>
+        <div class="score-value">19 <span class="unit">patterns</span></div>
+        <div class="score-sub">Core architecture is solid</div>
+      </div>
+      <div class="score-card">
+        <div class="score-label">Can Be Improved</div>
+        <div class="score-value">12 <span class="unit">items</span></div>
+        <div class="score-sub">Refinements, not fundamental gaps</div>
+      </div>
+      <div class="score-card">
+        <div class="score-label">Not Applicable</div>
+        <div class="score-value">29 <span class="unit">features</span></div>
+        <div class="score-sub">IDE-specific, not relevant to web chat</div>
+      </div>
+      <div class="score-card">
+        <div class="score-label">High-Value Actions</div>
+        <div class="score-value">6 <span class="unit">items</span></div>
+        <div class="score-sub">Starred priority improvements</div>
+      </div>
+    </div>
+
+    <!-- Comparison Winners Summary -->
+    <h2 style="font-size:22px;font-weight:700;letter-spacing:-0.5px;margin-bottom:20px;">Comparison Summary — All Modules</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Aspect</th>
+            <th>Claude Code</th>
+            <th>OneChat</th>
+            <th>Winner</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Agentic Harness -->
+          <tr><td>Use Case</td><td>IDE coding assistant</td><td>Web chat application</td><td><span class="winner-tag tag-equiv">Different targets</span></td></tr>
+          <tr><td>Execution Model</td><td>Terminal/headless CLI</td><td>WebSocket web app</td><td><span class="winner-tag tag-onechat">OneChat</span></td></tr>
+          <tr><td>Provider Support</td><td>Single (Anthropic)</td><td>Multi (OpenAI/Claude/Gemini)</td><td><span class="winner-tag tag-onechat">OneChat ✅</span></td></tr>
+          <tr><td>Conversation Storage</td><td>Append-only JSONL files</td><td>Database (Django models)</td><td><span class="winner-tag tag-onechat">OneChat ✅</span></td></tr>
+          <tr><td>Context Management</td><td>Auto-compact + error recovery</td><td>Track only</td><td><span class="winner-tag tag-claude">Claude Code ✅</span></td></tr>
+          <tr><td>Agent Architecture</td><td>Async coordinator + workers</td><td>Sync orchestrator dispatch</td><td><span class="winner-tag tag-equiv">Equivalent</span></td></tr>
+          <tr><td>Memory System</td><td>Auto-memory + dream agent</td><td>Mem0 + project memory</td><td><span class="winner-tag tag-equiv">Equivalent</span></td></tr>
+          <tr><td>Tool Execution</td><td>Streaming parallel</td><td>Sequential</td><td><span class="winner-tag tag-claude">Claude Code ✅</span></td></tr>
+          <tr><td>Error Handling</td><td>Withhold + recover</td><td>Show immediately</td><td><span class="winner-tag tag-claude">Claude Code ✅</span></td></tr>
+          <!-- Memory -->
+          <tr><td>Storage</td><td>Files</td><td>Database</td><td><span class="winner-tag tag-onechat">OneChat ✅</span></td></tr>
+          <tr><td>Memory Types</td><td>4 types</td><td>Single type</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>Relevance Selection</td><td>AI-powered</td><td>Basic vector search</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>Context Limits</td><td>Explicit (200 lines, 25KB)</td><td>No limits</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>Project Memory</td><td>✅ File-based</td><td>✅ Database-based</td><td><span class="winner-tag tag-equiv">Equivalent</span></td></tr>
+          <!-- Hooks -->
+          <tr><td>Hook Events</td><td>26 types</td><td>None</td><td><span class="winner-tag tag-claude">Claude Code (overkill?)</span></td></tr>
+          <tr><td>Permission Rules</td><td>9-step pipeline</td><td>Simple ask</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>Parameter Matching</td><td>Yes</td><td>No</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>Complexity</td><td>Very high</td><td>Low</td><td><span class="winner-tag tag-onechat">OneChat (simpler)</span></td></tr>
+          <!-- Infra -->
+          <tr><td>Session Management</td><td>State object</td><td>Django sessions</td><td><span class="winner-tag tag-onechat">OneChat (database)</span></td></tr>
+          <tr><td>Cost Tracking</td><td>In-memory state</td><td>Database</td><td><span class="winner-tag tag-onechat">OneChat (persistent)</span></td></tr>
+          <tr><td>Retry Logic</td><td>Unified withRetry</td><td>Ad-hoc</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>State Management</td><td>Central STATE object</td><td>Scattered</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>Bootstrap</td><td>Complex terminal setup</td><td>Django startup</td><td><span class="winner-tag tag-onechat">OneChat (simpler)</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- All High-Value Action Items -->
+    <h2 style="font-size:22px;font-weight:700;letter-spacing:-0.5px;margin-bottom:20px;">All High-Value Action Items ⭐</h2>
+    <ul class="action-list">
+      <li class="action-item">
+        <span class="action-priority priority-high">High</span>
+        <div class="action-content">
+          <h4>Context Preprocessing Pipeline</h4>
+          <p>Add microcompact_messages(), auto_compact_if_needed(), apply_tool_result_budget() — remove old tool results, summarize messages at 80% token limit, truncate large tool outputs.</p>
+          <div class="action-loc">backend/core/orchestrator.py</div>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-high">High</span>
+        <div class="action-content">
+          <h4>Error Withholding &amp; Recovery</h4>
+          <p>Catch context_length_exceeded errors in LLMAPILayer. Trigger message compaction. Retry same request (up to 1 time per session). Only show error if compaction still fails.</p>
+          <div class="action-loc">backend/LLMAPILayer/main.py</div>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-high">High</span>
+        <div class="action-content">
+          <h4>Tool Result Budget System</h4>
+          <p>Truncate oversized tool results before API call. Long email bodies, large API responses overflow context. Apply max_size of 2000 chars with truncation marker.</p>
+          <div class="action-loc">backend/core/orchestrator.py</div>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-high">High</span>
+        <div class="action-content">
+          <h4>Permission Rules Engine</h4>
+          <p>Tool-level + parameter-level permissions. Add PermissionRule with tool_pattern, behavior (allow/deny/ask), if_params matching, and reason fields. Enterprise readiness.</p>
+          <div class="action-loc">backend/config/permission_rules.py</div>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-high">High</span>
+        <div class="action-content">
+          <h4>Unified Retry Logic</h4>
+          <p>Replace ad-hoc retry logic with unified withRetry pattern: max 10 retries, exponential backoff (500ms base, 30s max), retry on 429/500/502/503/504.</p>
+          <div class="action-loc">backend/core/retry.py</div>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-high">High</span>
+        <div class="action-content">
+          <h4>AI-Powered Memory Relevance Selection</h4>
+          <p>Use Gemini Flash to select top-5 relevant memories from all retrieved memories. Side-query reduces noise in system prompt. Format memory manifest, return only relevant IDs.</p>
+          <div class="action-loc">backend/integrations/pinecone_client.py</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- AGENTIC HARNESS TAB -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="tab-harness">
+
+    <div class="summary-strip">
+      <div class="summary-cell"><div class="num">10</div><div class="lbl">Already Implemented</div></div>
+      <div class="summary-cell"><div class="num">2</div><div class="lbl">Can Be Improved</div></div>
+      <div class="summary-cell"><div class="num">8</div><div class="lbl">Not Applicable</div></div>
+    </div>
+
+    <!-- Already Has -->
+    <div class="section-header"><h2>Already Implemented</h2><span class="badge badge-green">✅ Solid</span></div>
+
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Session State Management</h3>
+        <p>Django models: OneChatSession, OneChatHistory. Equivalent to Claude Code's QueryEngine with mutableMessages[].</p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Retry Mechanism</h3>
+        <p>3-retry mechanism in task agent. Comparable to Claude Code's retry loop with exponential backoff.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Abort / Cancellation</h3>
+        <p>User can stop responses via WebSocket. Equivalent to AbortController hierarchy.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Message Persistence</h3>
+        <p>Database storage before LLM call (crash-safe). Claude Code uses write-ahead logging.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Multi-Agent System</h3>
+        <p>orchestrator.py coordinates: general_agent, task_agent, rag_agent. Comparable to coordinator + worker agents.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Tool Execution</h3>
+        <p>Composio MCP integration via ToolRouter. Equivalent to Claude Code's MCP tools and streaming executor.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Token Tracking</h3>
+        <p>LLMAPILayer monitors token usage. Comparable to BudgetTracker, per-turn monitoring.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Async Streaming</h3>
+        <p>WebSocket streaming response. Claude Code uses AsyncGenerator pipeline.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Provider Abstraction</h3>
+        <p>Multi-provider: OpenAI, Claude, Gemini. Claude Code supports single provider (Anthropic).</p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Intent Classification</h3>
+        <p>Dedicated Gemini Flash classifier. Claude Code uses built-in routing.</p>
+      </div>
+    </div>
+
+    <!-- Can Improve -->
+    <div class="section-header" style="margin-top:40px;"><h2>Can Be Improved</h2><span class="badge badge-amber">🔧 Refinements</span></div>
+
+    <ul class="action-list">
+      <li class="action-item">
+        <span class="action-priority priority-high">High</span>
+        <div class="action-content">
+          <h4>Context Preprocessing Pipeline</h4>
+          <p>Add microcompact_messages() → remove old tool results no longer relevant. Add auto_compact_if_needed() → summarize messages when approaching 80% token limit. Add apply_tool_result_budget() → truncate large tool outputs (e.g., long email bodies).</p>
+          <div class="action-loc">backend/core/orchestrator.py</div>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-high">High</span>
+        <div class="action-content">
+          <h4>Error Withholding &amp; Recovery</h4>
+          <p>Catch context_length_exceeded errors in LLMAPILayer. Trigger message compaction. Retry same request (up to 1 time per session). Only show error if compaction still fails.</p>
+          <div class="action-loc">backend/LLMAPILayer/main.py</div>
+        </div>
+      </li>
+    </ul>
+
+    <!-- Not Applicable -->
+    <div class="section-header" style="margin-top:40px;"><h2>Not Applicable</h2><span class="badge badge-red">❌ IDE-Specific</span></div>
+    <div class="na-grid">
+      <div class="na-item"><span class="na-x">✕</span> Startup prefetching — macOS IDE-specific, no keychain in web app</div>
+      <div class="na-item"><span class="na-x">✕</span> REPL/Interactive terminal — OneChat uses WebSocket-based web UI</div>
+      <div class="na-item"><span class="na-x">✕</span> Headless CLI mode — Different use case</div>
+      <div class="na-item"><span class="na-x">✕</span> Terminal rendering — Web frontend handles all UI</div>
+      <div class="na-item"><span class="na-x">✕</span> File state caching — No file editing in chat application</div>
+      <div class="na-item"><span class="na-x">✕</span> Background bash tasks — No terminal access</div>
+      <div class="na-item"><span class="na-x">✕</span> Git operation controls — Not a code editor</div>
+      <div class="na-item"><span class="na-x">✕</span> Workspace folder isolation — Single-window web app</div>
+    </div>
+
+    <!-- Comparison -->
+    <div class="section-header" style="margin-top:40px;"><h2>Comparison</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Aspect</th><th>Claude Code</th><th>OneChat</th><th>Winner</th></tr></thead>
+        <tbody>
+          <tr><td>Use Case</td><td>IDE coding assistant</td><td>Web chat application</td><td><span class="winner-tag tag-equiv">Different targets</span></td></tr>
+          <tr><td>Execution Model</td><td>Terminal/headless CLI</td><td>WebSocket web app</td><td><span class="winner-tag tag-onechat">OneChat (web standard)</span></td></tr>
+          <tr><td>Provider Support</td><td>Single (Anthropic)</td><td>Multi (OpenAI/Claude/Gemini)</td><td><span class="winner-tag tag-onechat">OneChat ✅</span></td></tr>
+          <tr><td>Conversation Storage</td><td>Append-only JSONL files</td><td>Database (Django models)</td><td><span class="winner-tag tag-onechat">OneChat ✅</span></td></tr>
+          <tr><td>Context Management</td><td>Auto-compact + error recovery</td><td>Track only</td><td><span class="winner-tag tag-claude">Claude Code ✅</span></td></tr>
+          <tr><td>Agent Architecture</td><td>Async coordinator + workers</td><td>Sync orchestrator dispatch</td><td><span class="winner-tag tag-equiv">Equivalent</span></td></tr>
+          <tr><td>Memory System</td><td>Auto-memory + dream agent</td><td>Mem0 + project memory</td><td><span class="winner-tag tag-equiv">Equivalent</span></td></tr>
+          <tr><td>Tool Execution</td><td>Streaming parallel</td><td>Sequential</td><td><span class="winner-tag tag-claude">Claude Code ✅</span></td></tr>
+          <tr><td>Error Handling</td><td>Withhold + recover</td><td>Show immediately</td><td><span class="winner-tag tag-claude">Claude Code ✅</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- MEMORY TAB -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="tab-memory">
+
+    <div class="summary-strip">
+      <div class="summary-cell"><div class="num">4</div><div class="lbl">Already Implemented</div></div>
+      <div class="summary-cell"><div class="num">3</div><div class="lbl">Can Be Improved</div></div>
+      <div class="summary-cell"><div class="num">5</div><div class="lbl">Not Applicable</div></div>
+    </div>
+
+    <div class="section-header"><h2>Already Implemented</h2><span class="badge badge-green">✅ Solid</span></div>
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Persistent Memory System</h3>
+        <p>Mem0 integration. User memory persists across sessions. Automatic memory extraction from conversations. Pinecone vector storage for semantic search.</p>
+        <div class="card-meta">backend/integrations/</div>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Project Memory</h3>
+        <p>OneChatProject model with project-specific context. Cross-session project memory. Retrieved when user works within a project. Stored in database, not files.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Context Assembly</h3>
+        <p>Orchestrator context building. Assembles user info, memory, intent classification. Parallel execution (intent + memory search).</p>
+        <div class="card-meta">backend/core/orchestrator.py</div>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Conversation History</h3>
+        <p>Database storage (OneChatHistory, OneChatSession). Better scalability. Built-in backup. Multi-instance support.</p>
+      </div>
+    </div>
+
+    <div class="section-header" style="margin-top:40px;"><h2>Can Be Improved</h2><span class="badge badge-amber">🔧 Refinements</span></div>
+    <ul class="action-list">
+      <li class="action-item">
+        <span class="action-priority priority-high">High</span>
+        <div class="action-content">
+          <h4>AI-Powered Memory Relevance Selection</h4>
+          <p>Side-query to Gemini Flash: "Pick 5 most relevant memories for this query." Scans all memory files, selects contextually relevant ones. Reduces noise in system prompt. Currently retrieves memories but no AI-driven relevance filtering — may inject irrelevant memories into context.</p>
+          <div class="action-loc">backend/integrations/pinecone_client.py</div>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-medium">Medium</span>
+        <div class="action-content">
+          <h4>Context Compression Strategy</h4>
+          <p>No explicit context size limits for memory injection. Risk of context window overflow. Add memory content limits in orchestrator. Summarize long memories before injection. Cap total memory context to 10% of model's context window.</p>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-low">Low</span>
+        <div class="action-content">
+          <h4>Memory Type Taxonomy</h4>
+          <p>Currently single memory type. Claude Code uses 4 types: user (preferences, role, goals), feedback (corrections, confirmations), project (ongoing work context), reference (external systems, docs). Tag memories by type for better retrieval.</p>
+        </div>
+      </li>
+    </ul>
+
+    <div class="section-header" style="margin-top:40px;"><h2>Not Applicable</h2><span class="badge badge-red">❌ IDE-Specific</span></div>
+    <div class="na-grid">
+      <div class="na-item"><span class="na-x">✕</span> File-based memory directory (~/.claude/projects/)</div>
+      <div class="na-item"><span class="na-x">✕</span> CLAUDE.md loading pipeline</div>
+      <div class="na-item"><span class="na-x">✕</span> Git status in context</div>
+      <div class="na-item"><span class="na-x">✕</span> Memory staleness warnings</div>
+      <div class="na-item"><span class="na-x">✕</span> 4 memory types (user/feedback/project/reference)</div>
+    </div>
+
+    <div class="section-header" style="margin-top:40px;"><h2>Comparison</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Aspect</th><th>Claude Code</th><th>OneChat</th><th>Winner</th></tr></thead>
+        <tbody>
+          <tr><td>Storage</td><td>Files</td><td>Database</td><td><span class="winner-tag tag-onechat">OneChat ✅</span></td></tr>
+          <tr><td>Memory Types</td><td>4 types</td><td>Single type</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>Relevance Selection</td><td>AI-powered</td><td>Basic vector search</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>Context Limits</td><td>Explicit (200 lines, 25KB)</td><td>No limits</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>Project Memory</td><td>✅ File-based</td><td>✅ Database-based</td><td><span class="winner-tag tag-equiv">Equivalent</span></td></tr>
+          <tr><td>User Memory</td><td>✅ Persistent</td><td>✅ Mem0</td><td><span class="winner-tag tag-equiv">Equivalent</span></td></tr>
+          <tr><td>Git Integration</td><td>Yes</td><td>N/A</td><td><span class="winner-tag tag-equiv">Different use cases</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- TOOLS TAB -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="tab-tools">
+
+    <div class="summary-strip">
+      <div class="summary-cell"><div class="num">4</div><div class="lbl">Already Implemented</div></div>
+      <div class="summary-cell"><div class="num">3</div><div class="lbl">Can Be Improved</div></div>
+      <div class="summary-cell"><div class="num">7</div><div class="lbl">Not Applicable</div></div>
+    </div>
+
+    <div class="section-header"><h2>Already Implemented</h2><span class="badge badge-green">✅ Solid</span></div>
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>MCP Tool Integration</h3>
+        <p>Composio MCP integration. Tool discovery via Composio dashboard. Supports: Gmail, Calendar, Slack, GitHub, etc.</p>
+        <div class="card-meta">backend/config/tool_router_config.py</div>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Tool Execution Framework</h3>
+        <p>ToolRouter execution. Composio handles tool execution. Error handling and retries. Result formatting.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Tool Permission System</h3>
+        <p>User confirmation for destructive actions. Asks before send, delete, create, update. Permission tracking in session.</p>
+        <div class="card-meta">backend/agents/task_agent.py</div>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Tool Result Size Limits</h3>
+        <p>Partial implementation. Claude Code uses maxResultSizeChars = 30,000. Large results may overflow context — no explicit truncation strategy.</p>
+      </div>
+    </div>
+
+    <div class="section-header" style="margin-top:40px;"><h2>Can Be Improved</h2><span class="badge badge-amber">🔧 Refinements</span></div>
+    <ul class="action-list">
+      <li class="action-item">
+        <span class="action-priority priority-high">High</span>
+        <div class="action-content">
+          <h4>Tool Result Budget System</h4>
+          <p>Truncate oversized tool results before API call. Long email bodies, large API responses overflow context. No result truncation currently. Apply max_size = 2000 chars with "[truncated]" marker.</p>
+          <div class="action-loc">backend/core/orchestrator.py</div>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-medium">Medium</span>
+        <div class="action-content">
+          <h4>Structured Permission Rules</h4>
+          <p>Tool-level + parameter-level permissions. Currently text-based confirmation only. Enhancement: add confirmation card UI.</p>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-medium">Medium</span>
+        <div class="action-content">
+          <h4>Tool Concurrency Safety Markers</h4>
+          <p>No concurrency guards. Risk: parallel "Send 5 emails" could cause rate limits or duplicate sends. Mark tools as concurrent_safe: bool. Sequential execution for unsafe tools. Parallel execution for safe (read-only) tools.</p>
+        </div>
+      </li>
+    </ul>
+
+    <div class="section-header" style="margin-top:40px;"><h2>Not Applicable</h2><span class="badge badge-red">❌ IDE-Specific</span></div>
+    <div class="na-grid">
+      <div class="na-item"><span class="na-x">✕</span> Built-in file editing tools (Read/Write/Edit)</div>
+      <div class="na-item"><span class="na-x">✕</span> BashTool, PowerShellTool</div>
+      <div class="na-item"><span class="na-x">✕</span> NotebookEditTool</div>
+      <div class="na-item"><span class="na-x">✕</span> ToolSearch deferred loading</div>
+      <div class="na-item"><span class="na-x">✕</span> AgentTool (subagents)</div>
+      <div class="na-item"><span class="na-x">✕</span> TaskOutputTool</div>
+      <div class="na-item"><span class="na-x">✕</span> Git/version control tools</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- HOOKS TAB -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="tab-hooks">
+
+    <div class="summary-strip">
+      <div class="summary-cell"><div class="num">3</div><div class="lbl">Already Implemented</div></div>
+      <div class="summary-cell"><div class="num">4</div><div class="lbl">Can Be Improved</div></div>
+      <div class="summary-cell"><div class="num">8</div><div class="lbl">Not Applicable</div></div>
+    </div>
+
+    <div class="section-header"><h2>Already Implemented</h2><span class="badge badge-green">✅ Solid</span></div>
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Permission System for Tools</h3>
+        <p>User confirmation for destructive actions. Asks before: send, delete, create, update. User approves/denies each action.</p>
+        <div class="card-meta">backend/agents/task_agent.py</div>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Tool Execution Logging</h3>
+        <p>CloudTrail logging. All tool calls logged. User actions tracked.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>OAuth Permission Flow</h3>
+        <p>Composio OAuth. Users connect accounts. Permission scopes managed. Token refresh handled.</p>
+      </div>
+    </div>
+
+    <div class="section-header" style="margin-top:40px;"><h2>Can Be Improved</h2><span class="badge badge-amber">🔧 Refinements</span></div>
+    <ul class="action-list">
+      <li class="action-item">
+        <span class="action-priority priority-high">High</span>
+        <div class="action-content">
+          <h4>Permission Rules Engine</h4>
+          <p>Current: simple — always ask for destructive actions. No rule persistence. No parameter-level permissions. Enhancement: PermissionRule with tool_pattern, behavior (allow/deny/ask), if_params matching, and reason. Example: auto-allow internal emails, ask for external, deny calendar deletion.</p>
+          <div class="action-loc">backend/config/permission_rules.py</div>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-medium">Medium</span>
+        <div class="action-content">
+          <h4>Pre/Post Tool Hooks</h4>
+          <p>Compliance checks before sending emails. Data loss prevention. Audit notifications. ToolHook class with event (pre_tool_use / post_tool_use), matcher (tool name pattern), and action. Example: email compliance hook checking for PII.</p>
+          <div class="action-loc">backend/core/hooks.py</div>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-low">Low</span>
+        <div class="action-content">
+          <h4>SessionStart Hook</h4>
+          <p>No session lifecycle hooks. Use case: inject org-specific context at session start — company policy, external API restrictions, email review requirements, data retention settings.</p>
+          <div class="action-loc">backend/core/hooks.py</div>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-low">Low</span>
+        <div class="action-content">
+          <h4>Stop Hook (Memory Extraction)</h4>
+          <p>Already implemented via Mem0. Memory extraction after each turn. No explicit hook needed. Status: Already implemented.</p>
+        </div>
+      </li>
+    </ul>
+
+    <div class="section-header" style="margin-top:40px;"><h2>Not Applicable</h2><span class="badge badge-red">❌ IDE-Specific</span></div>
+    <div class="na-grid">
+      <div class="na-item"><span class="na-x">✕</span> 26 hook event types — Too complex for web chat</div>
+      <div class="na-item"><span class="na-x">✕</span> Shell command hooks</div>
+      <div class="na-item"><span class="na-x">✕</span> File change watchers</div>
+      <div class="na-item"><span class="na-x">✕</span> Cwd changed hooks</div>
+      <div class="na-item"><span class="na-x">✕</span> Worktree create/remove — Git-specific</div>
+      <div class="na-item"><span class="na-x">✕</span> Setup hooks</div>
+      <div class="na-item"><span class="na-x">✕</span> Teammate/subagent hooks</div>
+      <div class="na-item"><span class="na-x">✕</span> Sandbox system — Not needed, server-side execution</div>
+    </div>
+
+    <div class="section-header" style="margin-top:40px;"><h2>Comparison</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Aspect</th><th>Claude Code</th><th>OneChat</th><th>Winner</th></tr></thead>
+        <tbody>
+          <tr><td>Hook Events</td><td>26 types</td><td>None</td><td><span class="winner-tag tag-claude">Claude Code (overkill?)</span></td></tr>
+          <tr><td>Permission Rules</td><td>9-step pipeline</td><td>Simple ask</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>Pre/Post Tool Hooks</td><td>Yes</td><td>No</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>Session Lifecycle</td><td>Hooks for start/end</td><td>None</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>Tool Logging</td><td>Yes</td><td>Yes (CloudTrail)</td><td><span class="winner-tag tag-equiv">Equivalent</span></td></tr>
+          <tr><td>Parameter Matching</td><td>Yes</td><td>No</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>Complexity</td><td>Very high</td><td>Low</td><td><span class="winner-tag tag-onechat">OneChat (simpler)</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- INFRASTRUCTURE TAB -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="tab-infra">
+
+    <div class="summary-strip">
+      <div class="summary-cell"><div class="num">5</div><div class="lbl">Already Implemented</div></div>
+      <div class="summary-cell"><div class="num">3</div><div class="lbl">Can Be Improved</div></div>
+      <div class="summary-cell"><div class="num">8</div><div class="lbl">Not Applicable</div></div>
+    </div>
+
+    <div class="section-header"><h2>Already Implemented</h2><span class="badge badge-green">✅ Solid</span></div>
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Service Layer Architecture</h3>
+        <p>Django project structure: agents/, api/, services/, integrations/, engines/, core/. Modular services equivalent to Claude Code.</p>
+        <div class="card-meta">backend/</div>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Session Management</h3>
+        <p>Django session + database. OneChatSession model. Session ID tracking. User context persistence.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Cost Tracking</h3>
+        <p>Credit system. Track usage per user/org. Billing integration.</p>
+        <div class="card-meta">backend/data/credits/</div>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>API Client with Retry</h3>
+        <p>Partial — basic retry in some places. Claude Code has unified withRetry (10 retries, exponential backoff).</p>
+      </div>
+      <div class="card">
+        <div class="card-icon icon-green">✓</div>
+        <h3>Analytics / Logging</h3>
+        <p>CloudTrail + application logs. Production CloudTrail. Event tracking.</p>
+        <div class="card-meta">backend/logs/</div>
+      </div>
+    </div>
+
+    <div class="section-header" style="margin-top:40px;"><h2>Can Be Improved</h2><span class="badge badge-amber">🔧 Refinements</span></div>
+    <ul class="action-list">
+      <li class="action-item">
+        <span class="action-priority priority-high">High</span>
+        <div class="action-content">
+          <h4>Unified Retry Logic</h4>
+          <p>Ad-hoc retry logic currently. Inconsistent across different API calls. No unified backoff strategy. Enhancement: max 10 retries, baseDelay 500ms, maxDelay 30s, retry on [429, 500, 502, 503, 504].</p>
+          <div class="action-loc">backend/core/retry.py</div>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-medium">Medium</span>
+        <div class="action-content">
+          <h4>Structured State Management</h4>
+          <p>State scattered across modules. Enhancement: central ApplicationState dataclass with session, cost tracking, agent state, feature flags. Methods: track_usage(), reset_for_new_session().</p>
+          <div class="action-loc">backend/core/state.py</div>
+        </div>
+      </li>
+      <li class="action-item">
+        <span class="action-priority priority-medium">Medium</span>
+        <div class="action-content">
+          <h4>Graceful Degradation Pattern</h4>
+          <p>Errors shown immediately. Enhancement: retries, fallbacks, error withholding. Better UX for transient failures.</p>
+        </div>
+      </li>
+    </ul>
+
+    <div class="section-header" style="margin-top:40px;"><h2>Not Applicable</h2><span class="badge badge-red">❌ IDE-Specific</span></div>
+    <div class="na-grid">
+      <div class="na-item"><span class="na-x">✕</span> Terminal bootstrap</div>
+      <div class="na-item"><span class="na-x">✕</span> UDS messaging (Unix Domain Sockets)</div>
+      <div class="na-item"><span class="na-x">✕</span> Worktree management</div>
+      <div class="na-item"><span class="na-x">✕</span> iTerm2 backup restoration</div>
+      <div class="na-item"><span class="na-x">✕</span> Native TypeScript modules</div>
+      <div class="na-item"><span class="na-x">✕</span> OpenTelemetry instrumentation</div>
+      <div class="na-item"><span class="na-x">✕</span> Ink rendering setup</div>
+      <div class="na-item"><span class="na-x">✕</span> Upstream proxy</div>
+    </div>
+
+    <div class="section-header" style="margin-top:40px;"><h2>Comparison</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Aspect</th><th>Claude Code</th><th>OneChat</th><th>Winner</th></tr></thead>
+        <tbody>
+          <tr><td>Service Architecture</td><td>Modular services</td><td>Django apps</td><td><span class="winner-tag tag-equiv">Equivalent</span></td></tr>
+          <tr><td>Session Management</td><td>State object</td><td>Django sessions</td><td><span class="winner-tag tag-onechat">OneChat (database)</span></td></tr>
+          <tr><td>Cost Tracking</td><td>In-memory state</td><td>Database</td><td><span class="winner-tag tag-onechat">OneChat (persistent)</span></td></tr>
+          <tr><td>Retry Logic</td><td>Unified withRetry</td><td>Ad-hoc</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+          <tr><td>Analytics</td><td>Datadog + BQ</td><td>CloudTrail</td><td><span class="winner-tag tag-equiv">Equivalent</span></td></tr>
+          <tr><td>Bootstrap</td><td>Complex terminal setup</td><td>Django startup</td><td><span class="winner-tag tag-onechat">OneChat (simpler)</span></td></tr>
+          <tr><td>State Management</td><td>Central STATE object</td><td>Scattered</td><td><span class="winner-tag tag-claude">Claude Code</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- Footer -->
+<footer style="text-align:center;padding:24px;font-size:12px;color:var(--black-tertiary);border-top:1px solid var(--border);">
+  OneChat Architecture Analysis — Comparison against Claude Code patterns
+</footer>
+
+<script>
+  // Tab switching
+  const tabs = document.querySelectorAll('.nav-tab');
+  const sections = document.querySelectorAll('.section');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.tab;
+
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      sections.forEach(s => {
+        s.classList.remove('active');
+        if (s.id === 'tab-' + target) {
+          s.classList.add('active');
+        }
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+</script>
+</body>
+</html>
